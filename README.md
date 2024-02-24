@@ -7,9 +7,11 @@ API to pull data about specific user's GitHub repos
 - [Installation](#installation)
 - [Usage](#usage)
 - [Settings](#settings)
+- [Tech stack](#tech-stack)
 - [License](#license)
 
 ## Description
+
 This is a simple API that allows you to pull data about a specific user's GitHub repositories. It uses the [GitHub API](https://docs.github.com/en/rest) to pull the data and then returns it in a JSON format.
 
 
@@ -60,7 +62,14 @@ and in case of username that does not exist, the API will return a JSON object w
 
 All core settings are located in the `application.properties` file. You can change the server port, the GitHub API URL, and the GitHub Personal Token there.
 
-Adding a GitHub Personal Token is not necessary, but it will increase the number of requests you can make to the GitHub API.
+> [!TIP]
+> Adding a GitHub Personal Token is not necessary, but it will increase the number of requests you can make to the GitHub API.
+
+## Tech stack
+
+* Java 21
+* Spring Boot 3
+* Gradle
 
 ## License
 
