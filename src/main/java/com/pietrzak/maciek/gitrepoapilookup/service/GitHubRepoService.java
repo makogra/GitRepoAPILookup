@@ -23,7 +23,7 @@ public class GitHubRepoService {
     }
 
     public Mono<List<Repo>> getRepos(String owner) {
-        // Whem endpoint is set to root directory then there is call with favicon.ico that accidentally interact with this method
+        // When endpoint is set to root directory then there is call with favicon.ico that accidentally interact with this method
         if (owner.equals("favicon.ico")){
             System.out.println("favicon.ico was passed to getRepos method");
             return Mono.error(new UserNotFoundException("favicon.ico was passed to getRepos method"));
@@ -41,10 +41,12 @@ public class GitHubRepoService {
     }
 
     public Mono<List<GitHubBranch>> getBranches(String owner, String repoName) {
-        return gitHubApi.get()
-                .uri("/repos/{owner}/{repoName}/branches", owner, repoName)
-                .header("Authorization" , "token " + token )
-                .retrieve()
+        WebClient.RequestHeadersSpec<?> uri = gitHubApi.get().uri("/repos/{owner}/{repoName}/branches", owner, repoName);
+
+        if (token != null && !token.isEmpty()){
+            uri = uri.header("Authorization" , "token " + token );
+        }
+        return uri.retrieve()
                 .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         response -> Mono.error(new UserNotFoundException("Branch not found: " + owner)))
                 .bodyToFlux(GitHubBranch.class)
