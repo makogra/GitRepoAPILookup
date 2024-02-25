@@ -25,12 +25,34 @@ public class Controller {
 
     @GetMapping("/api/{username}")
     public List<GitHubRepoOfAccountResponse> getReposThatAreNotForks(@PathVariable String username) {
+        long start = System.currentTimeMillis();
         Mono<List<Repo>> repos = gitHubRepoService.getRepos(username);
-        return repos.block()
+        List<GitHubRepoOfAccountResponse> result = repos.block()
                 .stream()
                 .filter(repo -> !repo.isFork())
                 .map(repo -> new GitHubRepoOfAccountResponse(repo.getName(), repo.getLogin(), getBranches(repo.getLogin(), repo.getName()))).toList();
+        long stop = System.currentTimeMillis();
+        System.out.println("Time: " + (stop - start) + "ms");
+        return result;
         //TODO add test for empty input. Now it's returning 404
+
+    }
+
+    @GetMapping("test/{username}")
+    public List<Repo> getRepos(@PathVariable String username) {
+        List<Repo> repos = gitHubRepoService.getRepos(username).block();
+        StringBuilder sbRepos = new StringBuilder();
+        if (repos != null) {
+            repos.forEach(repo -> {
+                sbRepos.append(repo).append("|");
+                getBranches(repo.getLogin(), repo.getName()).forEach(branch -> sbRepos.append(branch).append(":"));
+                sbRepos.deleteCharAt(sbRepos.length()-1);
+                sbRepos.append("#");
+            });
+            sbRepos.deleteCharAt(sbRepos.length()-1);
+            System.out.println(sbRepos.toString());
+        }
+        return repos;
     }
 
     public List<GitHubBranch> getBranches(String owner,String repoName) {
