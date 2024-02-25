@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 @RestController
 public class Controller {
@@ -24,13 +25,34 @@ public class Controller {
     }
 
     @GetMapping("/api/{username}")
-    public List<GitHubRepoOfAccountResponse> getReposThatAreNotForks(@PathVariable String username) {
+    public Flux<GitHubRepoOfAccountResponse> getReposThatAreNotForks(@PathVariable String username) {
         long start = System.currentTimeMillis();
-        Mono<List<Repo>> repos = gitHubRepoService.getRepos(username);
-        List<GitHubRepoOfAccountResponse> result = repos.block()
-                .stream()
-                .filter(repo -> !repo.isFork())
-                .map(repo -> new GitHubRepoOfAccountResponse(repo.getName(), repo.getLogin(), getBranches(repo.getLogin(), repo.getName()))).toList();
+        System.out.println("Thread getReposThatAreNotForks = " + Thread.currentThread().getName());
+        Flux<Repo> repos = gitHubRepoService.getRepos(username);
+//        Flux<GitHubRepoOfAccountResponse> result = repos
+//                .parallel()
+//                .runOn(Schedulers.parallel())
+//                .flatMap(repo -> {
+//                    System.out.println("Thread " + repo.getName() + " = " + Thread.currentThread().getName());
+//                    return Mono.fromCallable(() -> new GitHubRepoOfAccountResponse(
+//                            repo.getName(),
+//                            repo.getLogin(),
+//                            getBranches(repo.getLogin(), repo.getName())
+//                    )).subscribeOn(Schedulers.parallel());
+//                }
+//        ).sequential();
+
+        Flux<GitHubRepoOfAccountResponse> result = repos
+                .parallel() // Enable parallel processing
+                .runOn(Schedulers.parallel()) // Run each element on a parallel scheduler
+                .flatMap(repo -> getBranches(repo.getLogin(), repo.getName())
+                        .collectList() // Collect branches into a list
+                        .flatMap(branches -> Mono.just(new GitHubRepoOfAccountResponse(
+                                repo.getName(),
+                                repo.getLogin(),
+                                branches))))
+                .sequential();
+
         long stop = System.currentTimeMillis();
         System.out.println("Time: " + (stop - start) + "ms");
         return result;
@@ -38,6 +60,7 @@ public class Controller {
 
     }
 
+    /*
     @GetMapping("test/{username}")
     public List<Repo> getRepos(@PathVariable String username) {
         List<Repo> repos = gitHubRepoService.getRepos(username).block();
@@ -55,8 +78,10 @@ public class Controller {
         return repos;
     }
 
-    public List<GitHubBranch> getBranches(String owner,String repoName) {
-        return gitHubRepoService.getBranches(owner, repoName).block();
+
+     */
+    public Flux<GitHubBranch> getBranches(String owner, String repoName) {
+        return gitHubRepoService.getBranches(owner, repoName);
     }
 
     @ExceptionHandler

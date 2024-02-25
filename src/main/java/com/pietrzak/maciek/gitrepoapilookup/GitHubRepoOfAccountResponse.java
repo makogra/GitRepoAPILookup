@@ -1,7 +1,9 @@
 package com.pietrzak.maciek.gitrepoapilookup;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @JsonPropertyOrder({"repositoryName", "OwnerLogin"})
@@ -12,8 +14,15 @@ public class GitHubRepoOfAccountResponse {
     String OwnerLogin;
     List<GitHubBranch> branches;
 
-    public GitHubRepoOfAccountResponse(String repositoryName, String ownerLogin, List<GitHubBranch> branches) {
+    public GitHubRepoOfAccountResponse(String repositoryName, String ownerLogin, Flux<GitHubBranch> branches) {
         System.out.println("repositoryName = " + repositoryName + ", ownerLogin = " + ownerLogin + ", branches = " + branches);
+        this.repositoryName = repositoryName;
+        OwnerLogin = ownerLogin;
+        this.branches = new ArrayList<>();
+        branches.subscribe(this.branches::add);
+    }
+
+    public GitHubRepoOfAccountResponse(String repositoryName, String ownerLogin, List<GitHubBranch> branches) {
         this.repositoryName = repositoryName;
         OwnerLogin = ownerLogin;
         this.branches = branches;

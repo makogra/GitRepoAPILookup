@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    /*
     @ExceptionHandler
     public ResponseEntity<UserErrorResponse> requestError(Exception exc) {
         return new ResponseEntity<>(new UserErrorResponse(404, "Page/API not found"), HttpStatus.NOT_FOUND);
     }
+
+     */
 }

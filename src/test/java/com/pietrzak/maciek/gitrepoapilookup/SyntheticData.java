@@ -1,6 +1,7 @@
 package com.pietrzak.maciek.gitrepoapilookup;
 
 import reactor.core.CoreSubscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
@@ -73,19 +74,16 @@ public class SyntheticData {
         }
     }
 
-    public Mono<List<Repo>> getRepos() {
-        List<Repo> list = reposMap.keySet().stream().toList();
-
-        return Mono.just(list);
+    public Flux<Repo> getRepos() {
+        return Flux.fromStream(reposMap.keySet().stream());
     }
 
-    public Mono<List<GitHubBranch>> getBranches(String repoName) {
-        List<GitHubBranch> branches = reposMap.entrySet()
+    public Flux<GitHubBranch> getBranches(String repoName) {
+        return Flux.fromIterable(reposMap.entrySet()
                 .stream()
                 .filter(repoListEntry -> repoListEntry.getKey().getName().equals(repoName))
                 .map(Map.Entry::getValue)
                 .findAny()
-                .orElse(new ArrayList<>());
-        return Mono.just(branches);
+                .orElse(new ArrayList<>()));
     }
 }

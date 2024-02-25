@@ -7,9 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Service
 public class GitHubRepoService {
@@ -22,11 +21,11 @@ public class GitHubRepoService {
         this.gitHubApi = gitHubApi;
     }
 
-    public Mono<List<Repo>> getRepos(String owner) {
+    public Flux<Repo> getRepos(String owner) {
         // When endpoint is set to root directory then there is call with favicon.ico that accidentally interact with this method
         if (owner.equals("favicon.ico")){
             System.out.println("favicon.ico was passed to getRepos method");
-            return Mono.error(new UserNotFoundException("favicon.ico was passed to getRepos method"));
+            return Flux.error(new UserNotFoundException("favicon.ico was passed to getRepos method"));
         }
         WebClient.RequestHeadersSpec<?> uri = gitHubApi.get().uri("/users/{owner}/repos", owner);
         if (token != null && !token.isEmpty()){
@@ -36,11 +35,10 @@ public class GitHubRepoService {
         return uri.retrieve()
                 .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         response -> Mono.error(new UserNotFoundException("User not found: " + owner)))
-                .bodyToFlux(Repo.class)
-                .collectList();
+                .bodyToFlux(Repo.class);
     }
 
-    public Mono<List<GitHubBranch>> getBranches(String owner, String repoName) {
+    public Flux<GitHubBranch> getBranches(String owner, String repoName) {
         WebClient.RequestHeadersSpec<?> uri = gitHubApi.get().uri("/repos/{owner}/{repoName}/branches", owner, repoName);
 
         if (token != null && !token.isEmpty()){
@@ -49,7 +47,6 @@ public class GitHubRepoService {
         return uri.retrieve()
                 .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         response -> Mono.error(new UserNotFoundException("Branch not found: " + owner)))
-                .bodyToFlux(GitHubBranch.class)
-                .collectList();
+                .bodyToFlux(GitHubBranch.class);
     }
 }
