@@ -38,12 +38,21 @@ public class Controller {
                                 branches))))
                 .sequential();
         return result;
-        //TODO add test for empty input. Now it's returning 404
+    }
 
+    @GetMapping("/api/")
+    public ResponseEntity<UserErrorResponse> egtEmptyAPI(){
+        UserErrorResponse errorResponse = new UserErrorResponse(HttpStatus.BAD_REQUEST.value(), "Empty username");
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     public Flux<GitHubBranch> getBranches(String owner, String repoName) {
         return gitHubRepoService.getBranches(owner, repoName);
+    }
+
+    @GetMapping("/error")
+    public ResponseEntity<UserErrorResponse> error() {
+        return handleUserNotFoundException(new UserNotFoundException("Page not found."));
     }
 
     @ExceptionHandler
