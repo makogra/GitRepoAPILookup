@@ -8,8 +8,6 @@ class GitRepoApiLookupApplicationTests {
 
 	@Test
 	void contextLoads() {
-		SyntheticData syntheticData = new SyntheticData("makogra");
-		syntheticData.printFile();
 	}
 
 }

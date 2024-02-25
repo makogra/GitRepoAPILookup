@@ -33,9 +33,4 @@ public class GitHubBranch {
     public void unpackSha(Map<String, String> commit) {
         this.sha = commit.get("sha");
     }
-
-    @Override
-    public String toString() {
-        return name + "," + sha;
-    }
 }
