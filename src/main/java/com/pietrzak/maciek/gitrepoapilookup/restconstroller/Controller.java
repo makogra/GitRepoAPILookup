@@ -30,11 +30,12 @@ public class Controller {
         Flux<GitHubRepoOfAccountResponse> result = repos
                 .parallel()
                 .runOn(Schedulers.parallel())
-                .flatMap(repo -> getBranches(repo.getLogin(), repo.getName())
+                .filter(repo -> !repo.fork())
+                .flatMap(repo -> getBranches(repo.login(), repo.name())
                         .collectList()
                         .flatMap(branches -> Mono.just(new GitHubRepoOfAccountResponse(
-                                repo.getName(),
-                                repo.getLogin(),
+                                repo.name(),
+                                repo.login(),
                                 branches))))
                 .sequential();
         return result;
