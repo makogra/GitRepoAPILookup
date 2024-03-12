@@ -19,14 +19,19 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class ControllerTest {
 
-    static Controller controller;
+    private static GitHubRepoService gitHubRepoServiceMock;
+
+    private static Controller controller;
+    private final static String owner1 = "owner1";
 
     @BeforeAll
     public static void setUpClass() {
-        GitHubRepoService gitHubRepoServiceMock = Mockito.mock(GitHubRepoService.class);
-        controller = new Controller(gitHubRepoServiceMock);
+        gitHubRepoServiceMock = Mockito.mock(GitHubRepoService.class);
 
-        // Branches
+        // default
+        when(gitHubRepoServiceMock.getRepos(Mockito.anyString())).thenReturn(null);
+        when(gitHubRepoServiceMock.getBranches(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
+        when(gitHubRepoServiceMock.getBranches(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
 
         // owner1
         Flux<GitHubBranch> branchesOwnedByOwner1Repo1 = Flux.just(new GitHubBranch("branch1_O1_R1", "sha1_O1_R1"),
@@ -57,9 +62,9 @@ class ControllerTest {
         // Repos
 
         // owner1
-        Flux<Repo> reposOwnedByOwner1 = Flux.just(new Repo("repo1", "owner1", false),
-                new Repo("repo2", "owner1", false),
-                new Repo("repo3", "owner1", true));
+        Flux<Repo> reposOwnedByOwner1 = Flux.just(new Repo("repo1", owner1, false),
+                new Repo("repo2", owner1, false),
+                new Repo("repo3", owner1, true));
 
         // owner2
         Flux<Repo> reposOwnedByOwner2 = Flux.just(new Repo("repo1", "owner2", true),
@@ -68,32 +73,46 @@ class ControllerTest {
         // owner3
         Flux<Repo> reposOwnedByOwner3 = Flux.just(new Repo("repo1", "owner3", true));
 
-        when(gitHubRepoServiceMock.getRepos("owner1")).thenReturn(reposOwnedByOwner1);
+        when(gitHubRepoServiceMock.getRepos(owner1)).thenReturn(reposOwnedByOwner1);
         when(gitHubRepoServiceMock.getRepos("owner2")).thenReturn(reposOwnedByOwner2);
         when(gitHubRepoServiceMock.getRepos("owner3")).thenReturn(reposOwnedByOwner3);
 
-        when(gitHubRepoServiceMock.getBranches("owner1", "repo1")).thenReturn(branchesOwnedByOwner1Repo1);
-        when(gitHubRepoServiceMock.getBranches("owner1", "repo2")).thenReturn(branchesOwnedByOwner1Repo2);
-        when(gitHubRepoServiceMock.getBranches("owner1", "repo3")).thenReturn(branchesOwnedByOwner1Repo3Fork);
+        when(gitHubRepoServiceMock.getBranches(owner1, "repo1")).thenReturn(branchesOwnedByOwner1Repo1);
+        when(gitHubRepoServiceMock.getBranches(owner1, "repo2")).thenReturn(branchesOwnedByOwner1Repo2);
+        when(gitHubRepoServiceMock.getBranches(owner1, "repo3")).thenReturn(branchesOwnedByOwner1Repo3Fork);
 
         when(gitHubRepoServiceMock.getBranches("owner2", "repo1")).thenReturn(branchesOwnedByOwner2Repo1Fork);
         when(gitHubRepoServiceMock.getBranches("owner2", "repo2")).thenReturn(branchesOwnedByOwner2Repo1);
 
         when(gitHubRepoServiceMock.getBranches("owner3", "repo1")).thenReturn(branchesOwnedByOwner3Repo1Fork);
-        when(gitHubRepoServiceMock.getBranches("owner3", "repo2")).thenReturn(branchesOwnedByOwner3Repo1Fork);
-        
-        // default
-        when(gitHubRepoServiceMock.getRepos(Mockito.anyString())).thenReturn(null);
-        when(gitHubRepoServiceMock.getBranches(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
-        when(gitHubRepoServiceMock.getBranches(Mockito.anyString(), Mockito.anyString())).thenReturn(null);
 
+        controller = new Controller(gitHubRepoServiceMock);
     }
 
     @Test
     void getReposThatAreNotForks_givenValidInputAndContainingData_returnsNotNull() {
-        Flux<GitHubRepoOfAccountResponse> reposThatAreNotForks = controller.getReposThatAreNotForks("owner1");
+        Flux<GitHubRepoOfAccountResponse> reposThatAreNotForks = controller.getReposThatAreNotForks(owner1);
 
         Assertions.assertThat(reposThatAreNotForks).isNotNull();
+    }
+
+    @Test
+    void getRepos_givenValidInputAndContainingData_returnsNotNull() {
+        // Mock data
+        String owner = "owner5";
+        Flux<Repo> reposOwnedByOwner5 = Flux.just(
+                new Repo("repo1", owner, false),
+                new Repo("repo2", owner, false),
+                new Repo("repo3", owner, true));
+
+        // Stub behavior of the mock
+        when(gitHubRepoServiceMock.getRepos(owner)).thenReturn(reposOwnedByOwner5);
+
+        // Call the method under test
+        Flux<Repo> repos = controller.getRepos(owner);
+
+        // Verify
+        Assertions.assertThat(repos).isEqualTo(reposOwnedByOwner5);
     }
 
     //test for only forks
@@ -101,7 +120,7 @@ class ControllerTest {
     void getReposThatAreNotForks_givenValidInputAndContainingOnlyForks_returnsNull() {
         Flux<GitHubRepoOfAccountResponse> reposThatAreNotForks = controller.getReposThatAreNotForks("owner3");
 
-        Assertions.assertThat(reposThatAreNotForks).isNull();
+        Assertions.assertThat(reposThatAreNotForks.blockFirst()).isNull();
     }
 
 }
