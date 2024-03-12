@@ -38,6 +38,10 @@ public class GitHubRepoService {
                 .bodyToFlux(Repo.class);
     }
 
+    public Flux<Repo> getReposThatAreNotForks(String owner) {
+        return getRepos(owner).filter(repo -> !repo.fork());
+    }
+
     public Flux<GitHubBranch> getBranches(String owner, String repoName) {
         WebClient.RequestHeadersSpec<?> uri = gitHubApi.get().uri("/repos/{owner}/{repoName}/branches", owner, repoName);
 

@@ -41,6 +41,10 @@ public class Controller {
         return result;
     }
 
+    public Flux<Repo> getRepos(String owner) {
+        return gitHubRepoService.getRepos(owner);
+    }
+
     @GetMapping("/api/")
     public ResponseEntity<UserErrorResponse> egtEmptyAPI(){
         UserErrorResponse errorResponse = new UserErrorResponse(HttpStatus.BAD_REQUEST.value(), "Empty username");
